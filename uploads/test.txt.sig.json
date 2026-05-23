@@ -1,0 +1,10 @@
+{
+    "filename": "test.txt",
+    "file_content": "VGhpcyBpcyBhIGRvY3VtZW50IGZpbGUhIQ==",
+    "signer": "user1",
+    "hash_algorithm": "SHA-256",
+    "signature_algorithm": "ECDSA-SECP256R1",
+    "signature": "MEUCIQC6nsxwAHjG8m5GjZUneGC4EaBUK/L883MYXnaFBWmX2QIgLaGxBLa44ZCocQ6mhQzZlqVuAZ8wL4jWEqrC8rXSX20=",
+    "timestamp": "2026-04-29T15:41:56.973649",
+    "expires_at": "2026-04-29T15:42:06.973622"
+}

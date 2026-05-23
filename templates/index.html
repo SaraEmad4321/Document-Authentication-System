@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CipherSign — Document Authentication</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<span id="flask-msg" data-message="{{ message }}" style="display:none"></span> <!--Hidden element to store message from flask backend-->
+
+<!--Home page-->
+<div id="page-home" class="page active"> <!--The Home Page-->
+  <div class="home-badge">ECDSA · SHA-256 · Non-Repudiation</div> <!--Small lable showing used technologies-->
+  <h1 class="home-title">Document<br><span>Authentication.</span></h1> <!--The main title-->
+  <p class="home-sub">Sign any file with ECDSA. Verify its integrity at any time. Detect tampering down to a single byte.</p> <!--Short system description-->
+  <div class="home-cta-group"> <!--Button container-->
+    <button class="btn-primary" onclick="showPage('login')">Sign in</button> <!--Opens Login page-->
+    <button class="btn-ghost" onclick="showPage('register')">Create account</button> <!--Opens register page-->
+  </div>
+  <div class="home-features"> <!--Features section (Placed in the bottom of the home page)-->
+    <div class="feat"><span class="feat-icon">🔐</span><h4>Integrity</h4><p>SHA-256 hash detects any modification to the original document.</p></div>
+    <div class="feat"><span class="feat-icon">🪪</span><h4>Authentication</h4><p>ECDSA signatures bind each document to a verified signer identity.</p></div>
+    <div class="feat"><span class="feat-icon">⛓️</span><h4>Non-Repudiation</h4><p>Asymmetric key pairs make it impossible to deny signing.</p></div>
+  </div>
+</div>
+
+<!-- Login page (Appear after clicking on the sign in button) -->
+<div id="page-login" class="page">
+  <div class="auth-box"> <!--Login Container-->
+    <div class="auth-logo">CipherSign</div> <!--System logo-->
+    <h2 class="auth-title">Welcome back.</h2>
+    <p class="auth-sub">Sign in to access your signing dashboard.</p>
+    <div class="field"> <!--Input field-->
+      <label>Select User</label>
+      <select id="login-user"> <!--Dropdown menu-->
+        <option value="">— Choose user —</option>
+        <option value="user1">user1</option>
+        <option value="user2">user2</option>
+      </select>
+    </div>
+    <button class="btn-full" onclick="doLogin()">Sign in →</button> <!--Calls the login function-->
+    <div class="auth-switch">
+      No account? <a onclick="showPage('register')">Register here</a> &nbsp;·&nbsp; <a onclick="showPage('home')">← Back</a> <!--Go to register page-->
+    </div>
+  </div>
+</div>
+
+<!-- Registration page (Appear after clicking register whether when clicking it in the home page or the login page in case the user doesn't have an account)-->
+<div id="page-register" class="page">
+  <div class="auth-box">
+    <div class="auth-logo">CipherSign</div>
+    <h2 class="auth-title">Create account.</h2>
+    <p class="auth-sub">Choose any username — an ECDSA key pair will be generated and saved automatically.</p>
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="reg-user" placeholder="e.g. alice, bob, myname…" autocomplete="off" /> <!--Input field for username-->
+    </div>
+    <button class="btn-full" onclick="doRegister()">Generate keys &amp; register →</button> <!--Calls register function-->
+    <div id="reg-status" class="reg-status-banner"></div> <!--Shows result message-->
+    <div class="auth-switch">
+      Already registered? <a onclick="showPage('login')">Sign in</a> &nbsp;·&nbsp; <a onclick="showPage('home')">← Back</a>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="page-dashboard" class="page">
+  <nav class="topbar"> <!--Top navBar caontaining Logo: CipherSign; Username; Logout button-->
+    <div class="topbar-logo">CipherSign</div>
+    <div class="topbar-user">
+      <div class="user-pill"><div class="user-pill-dot"></div><span id="dash-username">user1</span></div> <!--Shows logged-in user-->
+      <button class="btn-logout" onclick="doLogout()">Logout</button> <!--Logout button-->
+    </div>
+  </nav>
+ <!--Main system content--> 
+  <main class="dash-main">
+    <div class="dash-greeting">
+      <h2>Dashboard</h2>
+      <p>Sign documents or verify their authenticity below.</p>
+    </div>
+    <div class="dash-tabs"> <!--Tabs (Sign;Verify;How it works)-->
+      <button class="tab-btn active" onclick="switchTab('sign', this)">✦ Sign</button>
+      <button class="tab-btn" onclick="switchTab('verify', this)">✔ Verify</button>
+      <button class="tab-btn" onclick="switchTab('about', this)">⬡ How it works</button>
+    </div>
+
+    <!--The sign tab-->
+    <div id="tab-sign" class="tab-panel active">
+      <div class="info-card">
+        <h4>Sign a document</h4>
+        <div class="upload-zone" id="sign-zone"> 
+          <input type="file" id="sign-file" onchange="fileChosen('sign-zone', this)"/> <!--Upload file field-->
+          <span class="upload-icon">📄</span> <!--Upload field-->
+          <h3>Drop any file here</h3>
+          <p>Supports text, PDF, images — any format</p>
+          <div class="file-chosen" id="sign-file-label"></div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Signer</label>
+            <select id="sign-user"><option value="user1">user1</option><option value="user2">user2</option></select> <!--Choose signer-->
+          </div>
+          <button class="btn-action" onclick="submitSign()">Sign document →</button> <!--Send to backend-->
+        </div>
+        <div id="sign-status" class="status-banner"></div> <!--Show result-->
+      </div>
+      <div class="info-card"> <!--short description for the Signing part-->
+        <h4>What happens when you sign</h4>
+        <div class="step-list">
+          <div class="step"><div class="step-num">1</div><div class="step-text"><strong>SHA-256 hash</strong> of the document is computed.</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text">Hash is <strong>signed with ECDSA</strong> using signer's private key.</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text">A <strong>.sig.json package</strong> is saved: document + signature + signer ID + timestamp.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- verify tab -->
+    <div id="tab-verify" class="tab-panel">
+      <div class="info-card">
+        <h4>Verify a signed document</h4> 
+        <div class="upload-zone" id="verify-zone"> 
+          <input type="file" id="verify-file" onchange="fileChosen('verify-zone', this)"/> <!--Upload file-->
+          <span class="upload-icon">🔍</span> <!--Upload field-->
+          <h3>Upload the original document</h3>
+          <p>The system will locate its .sig.json automatically</p>
+          <div class="file-chosen" id="verify-file-label"></div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Verify as user</label>
+            <select id="verify-user"><option value="user1">user1</option><option value="user2">user2</option></select> <!--Choose user to verify with-->
+          </div>
+          <button class="btn-action" onclick="submitVerify()">Verify →</button>
+        </div>
+        <div id="verify-status" class="status-banner"></div> <!--show result -->
+        <div id="sig-details" class="sig-detail"></div>
+      </div>
+      <div class="info-card"> <!--short description for the verification part-->
+        <h4>Verification will fail if…</h4>
+        <div class="step-list">
+          <div class="step"><div class="step-num" style="background:var(--danger);color:#fff">✕</div><div class="step-text"><strong>Document was tampered</strong> — even 1 changed byte alters the hash.</div></div>
+          <div class="step"><div class="step-num" style="background:var(--danger);color:#fff">✕</div><div class="step-text"><strong>Wrong public key</strong> — verifying with a different user's key.</div></div>
+          <div class="step"><div class="step-num" style="background:var(--danger);color:#fff">✕</div><div class="step-text"><strong>Signature modified</strong> — any change to the .sig.json invalidates it.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- How it works tab-->
+    <div id="tab-about" class="tab-panel">
+      <div class="info-card"> <!--System explaination(part 1)-->
+        <h4>Cryptographic design</h4>
+        <div class="step-list">
+          <div class="step"><div class="step-num">1</div><div class="step-text"><strong>ECDSA over SECP256R1</strong> — Elliptic Curve Digital Signature Algorithm. Provides authentication and non-repudiation using asymmetric key pairs.</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-text"><strong>SHA-256 hashing</strong> — fixed-length 256-bit digest. Makes signing large files efficient and detects any modification.</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-text"><strong>No encryption used</strong> — documents stay plaintext. This system provides integrity and identity, not confidentiality.</div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-text"><strong>Signed package format</strong> — filename, signer ID, algorithm info, Base64 signature, and ISO timestamp bundled as JSON.</div></div>
+        </div>
+      </div>
+      <div class="info-card"> <!--System explaination(part 2)-->
+        <h4>Security goals</h4>
+        <div class="step-list">
+          <div class="step"><div class="step-num">✓</div><div class="step-text"><strong>Integrity</strong> — SHA-256 hash detects tampering.</div></div>
+          <div class="step"><div class="step-num">✓</div><div class="step-text"><strong>Authentication</strong> — ECDSA signature binds identity to document.</div></div>
+          <div class="step"><div class="step-num">✓</div><div class="step-text"><strong>Non-repudiation</strong> — private key ownership cannot be denied.</div></div>
+          <div class="step"><div class="step-num">—</div><div class="step-text"><strong>Confidentiality</strong> — intentionally not provided. Not required by the threat model.</div></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html> 
